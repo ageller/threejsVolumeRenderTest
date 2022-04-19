@@ -14,14 +14,17 @@ function defineParams(){
 		this.renderer = null;
 		this.scene = null;
 
-		//for camera      
+		// for camera      
 		this.zmax = 1000;
 		this.zmin = 1;
 
-		//for gui
+		// for gui
 		this.gui = null;
 
-		this.volconfig = {clim1: 0, clim2: 1, renderstyle: 'mip', isothreshold: 0.1, colormap: 'viridis' };
+		// better for 128 FIRE gridding
+		this.volconfig = {clim1: 0.3, clim2: 0.8, renderstyle: 'mip', isothreshold: 0.5, colormap: 'viridis' };
+		// better for 256 FIRE gridding
+		//this.volconfig = {clim1: 0.2, clim2: 0.6, renderstyle: 'mip', isothreshold: 0.5, colormap: 'viridis' };
 		this.cmtextures = null
 		this.material = null;
 	};
@@ -58,7 +61,6 @@ function init(){
 
 	// controls
 	params.controls = new TrackballControls( params.camera, params.renderer.domElement );
-	params.controls.update();
 
 	window.addEventListener( 'resize', onWindowResize );
 }
@@ -85,8 +87,8 @@ function onWindowResize() {
 function createUI(){
 
 	params.gui = new dat.GUI();
-	params.gui.add( params.volconfig, 'clim1', -1, 1, 0.01 ).onChange( updateUniforms );
-	params.gui.add( params.volconfig, 'clim2', -1, 1, 0.01 ).onChange( updateUniforms );
+	params.gui.add( params.volconfig, 'clim1', 0, 1, 0.01 ).onChange( updateUniforms );
+	params.gui.add( params.volconfig, 'clim2', 0, 1, 0.01 ).onChange( updateUniforms );
 	params.gui.add( params.volconfig, 'colormap', { gray: 'gray', viridis: 'viridis' } ).onChange( updateUniforms );
 	params.gui.add( params.volconfig, 'renderstyle', { mip: 'mip', iso: 'iso' } ).onChange( updateUniforms );
 	params.gui.add( params.volconfig, 'isothreshold', 0, 1, 0.01).onChange( updateUniforms );
@@ -143,9 +145,10 @@ function drawScene(){
 
 	// THREE.Mesh
 	const geometry = new THREE.BoxGeometry(params.volume.xLength, params.volume.yLength, params.volume.zLength );
-	geometry.translate( params.volume.xLength/2 - 0.5, params.volume.yLength/2 - 0.5, params.volume.zLength/2 - 0.5 );
+	geometry.translate(params.volume.xLength/2 - 0.5, params.volume.yLength/2 - 0.5, params.volume.zLength/2 - 0.5);
 
 	const mesh = new THREE.Mesh(geometry, params.material);
+	mesh.position.set(-(params.volume.xLength/2 - 0.5), -(params.volume.yLength/2 - 0.5), -(params.volume.zLength/2 - 0.5));
 	params.scene.add( mesh );
 
 }
@@ -179,9 +182,12 @@ function WebGLStart(){
 }
 
 Promise.all([
+	//FIRE data interpolated to grid
+	d3.csv('src/data/FIREdata3D_128.csv'),
+	d3.csv('src/data/FIREdata3Dsizes_128.csv'),
 	//fake data the I created in python
-	d3.csv('src/data/data3D.csv'),
-	d3.csv('src/data/data3Dsizes.csv'),
+	// d3.csv('src/data/data3D.csv'),
+	// d3.csv('src/data/data3Dsizes.csv'),
 ]).then(function(d) {
 	defineParams();
 
