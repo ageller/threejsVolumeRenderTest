@@ -7,3 +7,8 @@ __pycache__
 # vim files # 
 ###################
 *.swp
+
+# large data files #
+# #################
+*256*csv
+*512*csv
