@@ -144,7 +144,7 @@ function updateRenderStyle(){
 		params.useShader = 2;
 	}
 
-	if (currentShader != params.useShader) WebGLStart();
+	WebGLStart();
 }
 ////////////////
 // For VolumeRenderShader1
@@ -157,7 +157,7 @@ function createUI1(){
 	params.gui.add( params.volconfig[0], 'clim1', 0, 1, 0.01 ).onChange( updateUniforms1 );
 	params.gui.add( params.volconfig[0], 'clim2', 0, 1, 0.01 ).onChange( updateUniforms1 );
 	params.gui.add( params.volconfig[0], 'colormap', { gray: 'gray', viridis: 'viridis' } ).onChange( updateUniforms1 );
-	params.gui.add( params.volconfig[0], 'isothreshold', 0, 1, 0.01).onChange( updateUniforms1 );
+	if (params.renderstyle == 'iso') params.gui.add( params.volconfig[0], 'isothreshold', 0, 1, 0.01).onChange( updateUniforms1 );
 
 }
 function updateUniforms1() {
