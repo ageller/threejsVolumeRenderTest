@@ -112,10 +112,14 @@ function onWindowResize() {
 
 	const aspect = window.innerWidth/window.innerHeight;
 
-	const frustumHeight = params.camera.top - params.camera.bottom;
+	if (params.useShader == 1){
+		const frustumHeight = params.camera.top - params.camera.bottom;
 
-	params.camera.left = -frustumHeight*aspect/2;
-	params.camera.right = frustumHeight*aspect/2;
+		params.camera.left = -frustumHeight*aspect/2;
+		params.camera.right = frustumHeight*aspect/2;
+	} else {
+		params.camera.aspect = aspect;
+	}
 
 	params.camera.updateProjectionMatrix();
 
