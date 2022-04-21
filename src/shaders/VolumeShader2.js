@@ -11,11 +11,14 @@ const VolumeRenderShader2 = {
 		'u_cameraPos': {value: new Vector3(0., 0., 0.)},
 		'u_threshold': { value: 0.25 },
 		'u_range': { value: 0.1 },
-		'u_opacity': { value: 0.25 },
+		'u_opacity': { value: 1.0 },
+		'u_intensity': { value: 1.0 },
 		'u_steps': { value: 100 },
 		'u_frame': { value: 0 },
 		'u_base': { value: new Vector3(0., 0., 0.) },
 		'u_data': { value: null },
+		'u_clim': { value: new Vector2( 1, 1 ) },
+		'u_cmdata': { value: null }
 
 	},
 
@@ -42,24 +45,33 @@ const VolumeRenderShader2 = {
 
 		uniform vec3 u_base;
 		uniform sampler3D u_data;
+		uniform sampler2D u_cmdata;
+
+		uniform vec2 u_clim;
 		uniform float u_threshold;
+		uniform float u_intensity;
 		uniform float u_range;
 		uniform float u_opacity;
 		uniform float u_steps;
 		uniform float u_frame;
 
+		vec4 apply_colormap(float val) {
+			val = (val - u_clim[0]) / (u_clim[1] - u_clim[0]);
+			return texture2D(u_cmdata, vec2(val, 0.5));
+		}
+
 		uint wang_hash(uint seed)
 		{
-				seed = (seed ^ 61u) ^ (seed >> 16u);
-				seed *= 9u;
-				seed = seed ^ (seed >> 4u);
-				seed *= 0x27d4eb2du;
-				seed = seed ^ (seed >> 15u);
-				return seed;
+			seed = (seed ^ 61u) ^ (seed >> 16u);
+			seed *= 9u;
+			seed = seed ^ (seed >> 4u);
+			seed *= 0x27d4eb2du;
+			seed = seed ^ (seed >> 15u);
+			return seed;
 		}
 		float randomFloat(inout uint seed)
 		{
-				return float(wang_hash(seed)) / 4294967296.;
+			return float(wang_hash(seed)) / 4294967296.;
 		}
 		vec2 hitBox( vec3 orig, vec3 dir ) {
 			const vec3 box_min = vec3( - 0.5 );
@@ -104,11 +116,18 @@ const VolumeRenderShader2 = {
 				float col = shading( p + 0.5 ) * 3.0 + ( ( p.x + p.y ) * 0.25 ) + 0.2;
 				ac.rgb += ( 1.0 - ac.a ) * d * col;
 				ac.a += ( 1.0 - ac.a ) * d;
+
 				if ( ac.a >= 0.95 ) break;
 				p += rayDir * delta;
 			}
-			gl_FragColor = ac;
-			if ( gl_FragColor.a == 0.0 ) discard;
+			//gl_FragColor = ac;
+			//if ( gl_FragColor.a == 0.0 ) discard;
+			
+			//gl_FragColor = vec4(clamp(u_intensity*ac.rgb, 0., 1.), 1.);
+
+			float intensity = clamp(u_intensity*length(ac.rgb), 0., 1.);
+			vec4 cmap = apply_colormap(intensity);
+			gl_FragColor = vec4(cmap.rgb, 1.);
 		}`
 };
 

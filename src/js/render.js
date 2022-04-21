@@ -34,12 +34,12 @@ function defineParams(){
 
 		// shader 1
 		// better for 128 FIRE gridding
-		this.volconfig.push({clim1: 0.3, clim2: 0.8, isothreshold: 0.5, colormap: 'viridis' });
+		this.volconfig.push({clim1: 0.3, clim2: 0.8, isothreshold: 0.5, colormap: 'gray' });
 		// better for 256 FIRE gridding
 		// this.volconfig = {clim1: 0.2, clim2: 0.6, renderstyle: 'mip', isothreshold: 0.5, colormap: 'viridis' };
 		
 		// shader 2
-		this.volconfig.push({threshold: 0.6, range: 0.1, opacity: 0.25, steps: 100, base: {r:0, g:0, b:0} });
+		this.volconfig.push({threshold: 0.6, range: 0.1, opacity: 1.0, intensity:1.0, steps: 150, clim1: 0., clim2: 1., colormap: 'gray' , base: {r:0, g:0, b:0} });
 		
 
 
@@ -66,6 +66,12 @@ function init(){
 
 	// scene
 	params.scene = new THREE.Scene();     
+
+	// Colormap textures
+	params.cmtextures = {
+		viridis: new THREE.TextureLoader().load( 'src/textures/cm_viridis.png', render ),
+		gray: new THREE.TextureLoader().load( 'src/textures/cm_gray.png', render )
+	};
 }
 
 function reinit(){
@@ -177,12 +183,6 @@ function drawScene1(){
 	texture.unpackAlignment = 1;
 	texture.needsUpdate = true;
 
-	// Colormap textures
-	params.cmtextures = {
-		viridis: new THREE.TextureLoader().load( 'src/textures/cm_viridis.png', render ),
-		gray: new THREE.TextureLoader().load( 'src/textures/cm_gray.png', render )
-	};
-
 	// Material
 	const shader = VolumeRenderShader1;
 
@@ -222,9 +222,12 @@ function createUI2(){
 	params.gui = new dat.GUI();
 	params.gui.add( params.volconfig[1], 'threshold', 0, 1, 0.01 ).onChange( updateUniforms2 );
 	params.gui.add( params.volconfig[1], 'opacity', 0, 1, 0.01 ).onChange( updateUniforms2 );
+	params.gui.add( params.volconfig[1], 'intensity', 0, 3, 0.1 ).onChange( updateUniforms2 );
 	params.gui.add( params.volconfig[1], 'range', 0, 1, 0.01 ).onChange( updateUniforms2 );
-	params.gui.add( params.volconfig[1], 'steps', 0, 200, 1 ).onChange( updateUniforms2 );
-	params.gui.addColor( params.volconfig[1], 'base').onChange( updateUniforms2 );
+	params.gui.add( params.volconfig[1], 'steps', 0, 300, 1 ).onChange( updateUniforms2 );
+	params.gui.add( params.volconfig[1], 'clim1', 0, 1, 0.01 ).onChange( updateUniforms2 );
+	params.gui.add( params.volconfig[1], 'clim2', 0, 1, 0.01 ).onChange( updateUniforms2 );
+	params.gui.add( params.volconfig[1], 'colormap', { gray: 'gray', viridis: 'viridis' } ).onChange( updateUniforms2 );
 
 }
 function updateUniforms2() {
@@ -232,9 +235,11 @@ function updateUniforms2() {
 	params.volumeMesh.material.uniforms[ 'u_threshold' ].value = params.volconfig[1].threshold;
 	params.volumeMesh.material.uniforms[ 'u_range' ].value = params.volconfig[1].range;
 	params.volumeMesh.material.uniforms[ 'u_opacity' ].value = params.volconfig[1].opacity;
+	params.volumeMesh.material.uniforms[ 'u_intensity' ].value = params.volconfig[1].intensity;
 	params.volumeMesh.material.uniforms[ 'u_steps' ].value = params.volconfig[1].steps; 
-	params.volumeMesh.material.uniforms[ 'u_base' ].value.set(params.volconfig[1].base.r/255., params.volconfig[1].base.g/255., params.volconfig[1].base.b/255.); 
-
+	params.volumeMesh.material.uniforms[ 'u_clim' ].value.set( params.volconfig[1].clim1, params.volconfig[1].clim2 );
+	params.volumeMesh.material.uniforms[ 'u_cmdata' ].value = params.cmtextures[ params.volconfig[1].colormap ];
+	
 	render();
 
 }
@@ -252,12 +257,6 @@ function drawScene2(){
 	texture.unpackAlignment = 1;
 	texture.needsUpdate = true;
 
-	// Colormap textures
-	params.cmtextures = {
-		viridis: new THREE.TextureLoader().load( 'src/textures/cm_viridis.png', render ),
-		gray: new THREE.TextureLoader().load( 'src/textures/cm_gray.png', render )
-	};
-
 	// Material
 	const shader = VolumeRenderShader2;
 
@@ -267,9 +266,12 @@ function drawScene2(){
 	uniforms[ 'u_threshold' ].value = params.volconfig[1].threshold;
 	uniforms[ 'u_range' ].value = params.volconfig[1].range;
 	uniforms[ 'u_opacity' ].value = params.volconfig[1].opacity;
+	uniforms[ 'u_intensity' ].value = params.volconfig[1].intensity;
 	uniforms[ 'u_steps' ].value = params.volconfig[1].steps; 
 	uniforms[ 'u_base' ].value.set(params.volconfig[1].base.r/255., params.volconfig[1].base.g/255., params.volconfig[1].base.b/255.); 
 	uniforms[ 'u_cameraPos' ].value.copy(params.camera.position); 
+	uniforms[ 'u_clim' ].value.set(params.volconfig[1].clim1, params.volconfig[1].clim2);
+	uniforms[ 'u_cmdata' ].value = params.cmtextures[params.volconfig[1].colormap];
 
 	const material = new THREE.ShaderMaterial( {
 		uniforms: uniforms,
@@ -295,6 +297,7 @@ function animate(time) {
 
 	if (params.useShader == 2){
 		params.volumeMesh.material.uniforms.u_cameraPos.value.copy( params.camera.position );
+		//this will increment the randomizer, but causes some shimmering with low step number
 		params.volumeMesh.material.uniforms.u_frame.value ++;
 	}
 	render();
