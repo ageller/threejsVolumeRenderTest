@@ -72,6 +72,9 @@ function init(){
 		viridis: new THREE.TextureLoader().load( 'src/textures/cm_viridis.png', render ),
 		gray: new THREE.TextureLoader().load( 'src/textures/cm_gray.png', render )
 	};
+
+	window.addEventListener( 'resize', onWindowResize );
+
 }
 
 function reinit(){
@@ -97,9 +100,9 @@ function reinit(){
 
 
 	// controls
+	if (params.controls) params.controls.dispose();
 	params.controls = new TrackballControls( params.camera, params.renderer.domElement );
 
-	window.addEventListener( 'resize', onWindowResize );
 }
 
 // update the camera on resize 
