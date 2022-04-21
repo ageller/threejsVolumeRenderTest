@@ -123,10 +123,10 @@ const VolumeRenderShader2 = {
 			//gl_FragColor = ac;
 			//if ( gl_FragColor.a == 0.0 ) discard;
 			
-			//gl_FragColor = vec4(clamp(u_intensity*ac.rgb, 0., 1.), 1.);
+			vec3 rgb = clamp(u_intensity*ac.rgb, 0., 1.);
+			//gl_FragColor = vec4(rgb, 1.);
 
-			float intensity = clamp(u_intensity*length(ac.rgb), 0., 1.);
-			vec4 cmap = apply_colormap(intensity);
+			vec4 cmap = apply_colormap(length(rgb));
 			gl_FragColor = vec4(cmap.rgb, 1.);
 		}`
 };
