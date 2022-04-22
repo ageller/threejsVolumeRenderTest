@@ -39,7 +39,8 @@ function defineParams(){
 		// this.volconfig = {clim1: 0.2, clim2: 0.6, isothreshold: 0.5, colormap: 'gray' };
 		
 		// shader 2
-		this.volconfig.push({threshold: 0.36, range: 0.1, opacity: 1.0, intensity:1.0, steps: 150, clim1: 0., clim2: 1., colormap: 'gray' , base: {r:0, g:0, b:0} });
+		//this.volconfig.push({threshold: 0.36, range: 0.1, opacity: 1.0, intensity:1.0, steps: 150, clim1: 0., clim2: 1., colormap: 'gray' , base: {r:0, g:0, b:0} });
+		this.volconfig.push({threshold: 0.36, range: 0.13, opacity: 0.04, intensity:2, steps: 150, clim1: 0., clim2: 1., colormap: 'gray' , base: {r:0, g:0, b:0} });
 		
 
 
@@ -81,7 +82,7 @@ function reinit(){
 
 	// clear the scene
 	while (params.scene.children.length){
-    	params.scene.remove(params.scene.children[0]);
+		params.scene.remove(params.scene.children[0]);
 	}
 
 	var aspect = window.innerWidth/window.innerHeight;
@@ -228,10 +229,10 @@ function createUI2(){
 
 	params.gui = new dat.GUI();
 	params.gui.add( params.volconfig[1], 'threshold', 0, 1, 0.01 ).onChange( updateUniforms2 );
-	params.gui.add( params.volconfig[1], 'opacity', 0, 1, 0.01 ).onChange( updateUniforms2 );
+	params.gui.add( params.volconfig[1], 'opacity', 0, 1, 0.001 ).onChange( updateUniforms2 );
 	params.gui.add( params.volconfig[1], 'intensity', 0, 3, 0.1 ).onChange( updateUniforms2 );
 	params.gui.add( params.volconfig[1], 'range', 0, 1, 0.01 ).onChange( updateUniforms2 );
-	params.gui.add( params.volconfig[1], 'steps', 0, 300, 1 ).onChange( updateUniforms2 );
+	params.gui.add( params.volconfig[1], 'steps', 0, 500, 1 ).onChange( updateUniforms2 );
 	params.gui.add( params.volconfig[1], 'clim1', 0, 1, 0.01 ).onChange( updateUniforms2 );
 	params.gui.add( params.volconfig[1], 'clim2', 0, 1, 0.01 ).onChange( updateUniforms2 );
 	params.gui.add( params.volconfig[1], 'colormap', { gray: 'gray', viridis: 'viridis' } ).onChange( updateUniforms2 );
@@ -312,7 +313,6 @@ function animate(time) {
 
 function render() {
 	params.renderer.render( params.scene, params.camera );
-
 }
 
 // this is called to start everything
@@ -339,19 +339,61 @@ function WebGLStart(){
 	animate();
 }
 
-d3.json('src/data/FIREdata3D_128.json').then(function(d) {
-	defineParams();
+
+// d3.json('src/data/FIREdata3D_128_galaxy.json').then(function(d) {
+// 	defineParams();
+// 	createUIStatic();
+// 	init();
+
+// 	params.volume = d;
+// 	//the volume shader requires a Float32Array for the data
+// 	params.volume.data = Float32Array.from(params.volume.data);
+
+// 	WebGLStart();
+// })
+// .catch(function(error){
+// 	console.log('ERROR:', error)
+// })
+
+
+function loadMeshKaitai(fname, callback, size=128){
+	// initialize a FileReader object
+	var binary_reader = new FileReader;
+	// get local file
+	fetch(fname)
+		.then(res => res.blob()) // convert to blob
+		.then(blob =>{ 
+		// interpret blob as an "ArrayBuffer" (basic binary stream)
+		binary_reader.readAsArrayBuffer(blob)
+		// wait until loading finishes, then call function
+		binary_reader.onloadend = function () {
+			// convert ArrayBuffer to FireflyFormat
+			var kaitai_format = new MeshFormat(new KaitaiStream(binary_reader.result));
+			console.log(kaitai_format)
+			// compile the data
+			params.volume = {};
+			// read the dimensions from the header
+			// if the below doesn't work it might be values rather than buffer
+			// should be able to tell from the console
+			// Alex made a mistake in the loader on data type.  For now, I will implement a naive fix;
+			//params.volume.size  = kaitai_format.meshHeader.sizeDimensions.buffer;
+			params.volume.size = [size, size, size];
+			//this_parts.size = data.meshHeader.sizeDimensions.values;
+			// load the mesh data
+			params.volume.data = Float32Array.from(kaitai_format.meshFieldDataFlat.flatVectorData.data.values);
+
+			callback()
+		}
+	});
+};
+
+
+function onLoad(){
 	createUIStatic();
 	init();
-
-	params.volume = d;
-	//the volume shader requires a Float34Array for the data
-	params.volume.data = Float32Array.from(params.volume.data);
-
-
 	WebGLStart();
-})
-.catch(function(error){
-	console.log('ERROR:', error)
-})
 
+}
+
+defineParams();
+loadMeshKaitai('src/data/FIREdata3D_256.b', onLoad, 256)
