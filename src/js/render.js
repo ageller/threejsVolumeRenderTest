@@ -34,12 +34,12 @@ function defineParams(){
 
 		// shader 1
 		// better for 128 FIRE gridding
-		this.volconfig.push({clim1: 0.3, clim2: 0.8, isothreshold: 0.5, colormap: 'gray' });
+		this.volconfig.push({clim1: 0.15, clim2: 0.6, isothreshold: 0.3, colormap: 'gray' });
 		// better for 256 FIRE gridding
-		// this.volconfig = {clim1: 0.2, clim2: 0.6, renderstyle: 'mip', isothreshold: 0.5, colormap: 'viridis' };
+		// this.volconfig = {clim1: 0.2, clim2: 0.6, isothreshold: 0.5, colormap: 'gray' };
 		
 		// shader 2
-		this.volconfig.push({threshold: 0.6, range: 0.1, opacity: 1.0, intensity:1.0, steps: 150, clim1: 0., clim2: 1., colormap: 'gray' , base: {r:0, g:0, b:0} });
+		this.volconfig.push({threshold: 0.36, range: 0.1, opacity: 1.0, intensity:1.0, steps: 150, clim1: 0., clim2: 1., colormap: 'gray' , base: {r:0, g:0, b:0} });
 		
 
 
@@ -339,28 +339,14 @@ function WebGLStart(){
 	animate();
 }
 
-Promise.all([
-	//FIRE data interpolated to grid
-	d3.csv('src/data/FIREdata3D_128.csv'),
-	d3.csv('src/data/FIREdata3Dsizes_128.csv'),
-	//fake data the I created in python
-	// d3.csv('src/data/data3D.csv'),
-	// d3.csv('src/data/data3Dsizes.csv'),
-]).then(function(d) {
+d3.json('src/data/FIREdata3D_128.json').then(function(d) {
 	defineParams();
 	createUIStatic();
 	init();
 
+	params.volume = d;
 	//the volume shader requires a Float34Array for the data
-	params.volume.data = new Float32Array(d[0].length);
-	d[0].forEach(function(dd,i){
-		params.volume.data[i] = +dd.data;
-	})
-	params.volume.size = [
-		parseInt(d[1][0].xLength),
-		parseInt(d[1][0].yLength),
-		parseInt(d[1][0].zLength)
-	]
+	params.volume.data = Float32Array.from(params.volume.data);
 
 
 	WebGLStart();
@@ -368,6 +354,4 @@ Promise.all([
 .catch(function(error){
 	console.log('ERROR:', error)
 })
-
-
 

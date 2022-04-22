@@ -10,5 +10,5 @@ __pycache__
 
 # large data files #
 # #################
-*256*csv
-*512*csv
+*256*json
+*512*json
