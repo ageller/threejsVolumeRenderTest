@@ -230,7 +230,7 @@ function createUI2(){
 	params.gui = new dat.GUI();
 	params.gui.add( params.volconfig[1], 'threshold', 0, 1, 0.01 ).onChange( updateUniforms2 );
 	params.gui.add( params.volconfig[1], 'opacity', 0, 1, 0.001 ).onChange( updateUniforms2 );
-	params.gui.add( params.volconfig[1], 'intensity', 0, 3, 0.1 ).onChange( updateUniforms2 );
+	params.gui.add( params.volconfig[1], 'intensity', 0, 10, 0.1 ).onChange( updateUniforms2 );
 	params.gui.add( params.volconfig[1], 'range', 0, 1, 0.01 ).onChange( updateUniforms2 );
 	params.gui.add( params.volconfig[1], 'steps', 0, 500, 1 ).onChange( updateUniforms2 );
 	params.gui.add( params.volconfig[1], 'clim1', 0, 1, 0.01 ).onChange( updateUniforms2 );
@@ -369,7 +369,6 @@ function loadMeshKaitai(fname, callback, size=128){
 		binary_reader.onloadend = function () {
 			// convert ArrayBuffer to FireflyFormat
 			var kaitai_format = new MeshFormat(new KaitaiStream(binary_reader.result));
-			console.log(kaitai_format)
 			// compile the data
 			params.volume = {};
 			// read the dimensions from the header
